@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maître du Passé : Imparfait vs Passé Composé</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; color: #1e293b; display: flex; justify-content: center; padding: 20px; line-height: 1.5; }
+        .container { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); max-width: 900px; width: 100%; }
+        
+        h1 { color: #0f172a; text-align: center; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #64748b; font-size: 0.95em; margin-bottom: 30px; }
+        .en-sub { display: block; font-size: 0.85em; color: #94a3b8; font-weight: normal; margin-top: 3px; }
+
+        .instruction-box { background: #eef2f7; padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #8b5cf6; font-size: 0.95em;}
+
+        .scenario { margin-bottom: 35px; padding: 25px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff; transition: transform 0.2s; }
+        .scenario:hover { border-color: #8b5cf6; }
+        
+        .verb-badge { display: inline-block; padding: 5px 10px; border-radius: 20px; font-size: 0.8em; font-weight: bold; margin-bottom: 15px; }
+        .regulier { background-color: #dbeafe; color: #1e40af; }
+        .irregulier { background-color: #fce7f3; color: #9d174d; }
+
+        .main-sentence { font-size: 1.4em; font-weight: 700; color: #4c1d95; margin-bottom: 15px; display: block; text-align: center; }
+        
+        .options { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 15px; }
+        input[type="text"] { padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; width: 220px; font-size: 1.1em; text-align: center; }
+        input[type="text"]:focus { border-color: #8b5cf6; outline: none; }
+        
+        button { padding: 12px 20px; cursor: pointer; border: 1px solid #8b5cf6; background: white; border-radius: 8px; font-weight: 600; transition: 0.2s; color: #8b5cf6; }
+        button:hover { background: #8b5cf6; color: white; }
+        .btn-check { background: #8b5cf6; color: white; }
+        .btn-main { background: #1e293b; color: white; width: 100%; font-size: 1.2em; padding: 20px; border: none; margin-top: 20px; }
+        .btn-main:hover { background: #334155; }
+
+        .feedback { margin-top: 20px; padding: 15px; border-radius: 8px; display: none; }
+        .correct { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .incorrect { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        
+        .explanation-fr { font-weight: 600; display: block; margin-bottom: 5px; }
+        .explanation-en { font-size: 0.85em; color: #475569; font-style: italic; display: block; }
+
+        #score-display { text-align: center; font-size: 1.5em; font-weight: 800; margin-bottom: 30px; color: #8b5cf6; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Le Passé Composé & L'Imparfait</h1>
+    <div class="subtitle">Entraînement : 80 Verbes Fréquents <br> <span class="en-sub">Practice: 80 Common Verbs</span></div>
+
+    <div class="instruction-box">
+        <strong>Instructions :</strong> Conjuguez le verbe entre parenthèses au temps approprié (Passé Composé ou Imparfait). <br>
+        <em>N'écrivez que le verbe conjugué (avec son auxiliaire si c'est le passé composé). Exemple : "ai mangé", "allait", "suis allé".</em>
+    </div>
+
+    <div id="score-display"></div>
+    <div id="quiz-area"></div>
+    
+    <div id="controls">
+        <button class="btn-main" onclick="startQuiz()">Nouvelle Session (12 questions) <br> <span class="en-sub" style="color:#cbd5e1">New Session (12 questions)</span></button>
+    </div>
+</div>
+
+<script>
+    // Explications réutilisables basées sur les sources
+    const E_PC_REG = "Le passé composé sert à exprimer une action ponctuelle, terminée dans le passé[cite: 2]. Le participe passé est régulier[cite: 1].";
+    const E_PC_IRR = "Le passé composé sert à exprimer une action ponctuelle, terminée dans le passé[cite: 2]. Ce participe passé est irrégulier[cite: 1, 2].";
+    const E_IMP = "L'imparfait sert à faire une description, à exprimer une action qui dure, ou à parler d'habitudes passées[cite: 2].";
+    const E_ETRE = "On utilise l'auxiliaire 'être' avec une liste de 14 verbes et leurs dérivés (la maison d'être)[cite: 1].";
+
+    const scenarios = [
+        // 1-10
+        { s: "Quand j'___ (être) petit, je jouais souvent.", a: ["étais"], t: "Imparfait", reg: "Irrégulier", e: `${E_IMP} Le verbe être est irrégulier à l'imparfait[cite: 2].` },
+        { s: "Hier, j'___ (avoir) une excellente idée.", a: ["ai eu"], t: "Passé Composé", reg: "Irrégulier", e: `${E_PC_IRR} Avoir devient 'eu'[cite: 1, 2].` },
+        { s: "Ce matin, nous ___ (faire) nos devoirs.", a: ["avons fait"], t: "Passé Composé", reg: "Irrégulier", e: `${E_PC_IRR} Faire devient 'fait'[cite: 1].` },
+        { s: "Il ___ (dire) la vérité hier soir.", a: ["a dit"], t: "Passé Composé", reg: "Irrégulier", e: `${E_PC_IRR} Dire devient 'dit'[cite: 1].` },
+        { s: "Avant, elle ne ___ (pouvoir) pas nager.", a: ["pouvait"], t: "Imparfait", reg: "Régulier", e: `${E_IMP} Formation : radical du présent (pouv-) + terminaison -ait[cite: 2].` },
+        { s: "Dimanche dernier, je ___ (aller) au cinéma.", a: ["suis allé", "suis allée"], t: "Passé Composé", reg: "Régulier", e: `${E_PC_REG} ${E_ETRE}` },
+        { s: "Soudain, nous ___ (voir) un éclair.", a: ["avons vu"], t: "Passé Composé", reg: "Irrégulier", e: `${E_PC_IRR} Voir devient 'vu'[cite: 1, 2].` },
+        { s: "Je ___ (savoir) la réponse avant tout le monde.", a: ["savais"], t: "Imparfait", reg: "Régulier", e: `${E_IMP} Action qui dure dans le passé[cite: 2].` },
+        { s: "Je n'___ (vouloir) pas manger ce plat hier.", a: ["ai pas voulu", "ai voulu"], t: "Passé Composé", reg: "Irrégulier", e: `Action ponctuelle[cite: 2]. Vouloir devient 'voulu'[cite: 1, 2].` },
+        { s: "Elles ___ (venir) à la fête samedi.", a: ["sont venues"], t: "Passé Composé", reg: "Irrégulier", e: `Action terminée[cite: 2]. ${E_ETRE} Venir devient 'venu'[cite: 1]. Accord du participe passé avec le sujet[cite: 2].` },
+
+        // 11-20
+        { s: "Il ___ (falloir) partir très tôt ce jour-là.", a: ["a fallu"], t: "Passé Composé", reg: "Irrégulier", e: `Action terminée[cite: 2]. Participe passé irrégulier.` },
+        { s: "Chaque soir, tu ___ (devoir) lire un livre.", a: ["devais"], t: "Imparfait", reg: "Régulier", e: `L'imparfait exprime des habitudes passées[cite: 2].` },
+        { s: "Longtemps, ils ___ (croire) au Père Noël.", a: ["croyaient"], t: "Imparfait", reg: "Régulier", e: `Action qui dure dans le passé[cite: 2].` },
+        { s: "J'___ (trouver) mes clés hier.", a: ["ai trouvé"], t: "Passé Composé", reg: "Régulier", e: `${E_PC_REG} Les verbes en -er se forment en ajoutant -é[cite: 1].` },
+        { s: "Vous m'___ (donner) un beau cadeau.", a: ["avez donné"], t: "Passé Composé", reg: "Régulier", e: `${E_PC_REG} Verbe en -er[cite: 1].` },
+        { s: "Le matin, je ___ (prendre) toujours le bus.", a: ["prenais"], t: "Imparfait", reg: "Régulier", e: `L'imparfait sert à parler d'habitudes passées[cite: 2].` },
+        { s: "Nous ___ (parler) pendant des heures.", a: ["avons parlé"], t: "Passé Composé", reg: "Régulier", e: `Action terminée[cite: 2]. Verbe en -er régulier[cite: 1].` },
+        { s: "Je n'___ (aimer) pas le café avant.", a: ["aimais"], t: "Imparfait", reg: "Régulier", e: `${E_IMP} La négation encadre le verbe (ne...pas)[cite: 2].` },
+        { s: "Elle ___ (passer) son examen avec succès.", a: ["a passé"], t: "Passé Composé", reg: "Régulier", e: `Avec un COD ('son examen'), 'passer' se construit avec 'avoir'[cite: 1].` },
+        { s: "Il ___ (mettre) son manteau et il est parti.", a: ["a mis"], t: "Passé Composé", reg: "Irrégulier", e: `${E_PC_IRR} Mettre devient 'mis'[cite: 1, 2].` },
+
+        // 21-30
+        { s: "J'___ (demander) de l'aide hier.", a: ["ai demandé"], t: "Passé Composé", reg: "Régulier", e: `${E_PC_REG}` },
+        { s: "Il ___ (tenir) la porte pour moi.", a: ["a tenu"], t: "Passé Composé", reg: "Irrégulier", e: `Action terminée[cite: 2]. Tenir est irrégulier.` },
+        { s: "La maison ___ (sembler) abandonnée.", a: ["semblait"], t: "Imparfait", reg: "Régulier", e: `L'imparfait sert à faire une description[cite: 2].` },
+        { s: "Tu ___ (laisser) ton sac au bureau hier.", a: ["as laissé"], t: "Passé Composé", reg: "Régulier", e: `${E_PC_REG}` },
+        { s: "Ils ___ (rester) chez eux ce week-end.", a: ["sont restés"], t: "Passé Composé", reg: "Régulier", e: `${E_ETRE} Accord avec le sujet[cite: 2].` },
+        { s: "Je ___ (penser) à toi toute la journée.", a: ["pensais", "ai pensé"], t: "Imparfait", reg: "Régulier", e: `Peut être Imparfait (action qui dure) ou Passé Composé (action terminée) selon l'intention[cite: 2].` },
+        { s: "Tout à coup, nous ___ (entendre) un bruit.", a: ["avons entendu"], t: "Passé Composé", reg: "Régulier", e: `Action ponctuelle[cite: 2]. Verbes en -re deviennent -u (régulier pour ce groupe)[cite: 1].` },
+        { s: "Elle ___ (regarder) par la fenêtre.", a: ["regardait"], t: "Imparfait", reg: "Régulier", e: `Description d'une action non terminée dans le passé[cite: 2].` },
+        { s: "Il ne m'___ (répondre) jamais quand j'étais enfant.", a: ["répondait"], t: "Imparfait", reg: "Régulier", e: `Habitude passée[cite: 2].` },
+        { s: "J'___ (rendre) le livre à la bibliothèque hier.", a: ["ai rendu"], t: "Passé Composé", reg: "Régulier", e: `Action terminée[cite: 2]. Verbe en -re régulier -> rendu[cite: 1].` },
+
+        // 31-40
+        { s: "Je ___ (connaître) bien cette ville avant.", a: ["connaissais"], t: "Imparfait", reg: "Régulier", e: `Description d'un état passé[cite: 2].` },
+        { s: "Le ciel ___ (paraître) très sombre.", a: ["paraissait"], t: "Imparfait", reg: "Régulier", e: `L'imparfait sert à faire une description[cite: 2].` },
+        { s: "Orianne ___ (arriver) un peu après 8 h.", a: ["est arrivée"], t: "Passé Composé", reg: "Régulier", e: `${E_ETRE} L'action est ponctuelle[cite: 2].` },
+        { s: "Je ne ___ (sentir) pas bien hier soir.", a: ["me sentais"], t: "Imparfait", reg: "Régulier", e: `Description d'un état[cite: 2].` },
+        { s: "On la ___ (attendre) depuis une heure.", a: ["attendait"], t: "Imparfait", reg: "Régulier", e: `Action qui dure et n'est pas terminée dans le passé[cite: 2].` },
+        { s: "Mon grand-père ___ (vivre) à la campagne.", a: ["vivait"], t: "Imparfait", reg: "Régulier", e: `Habitude ou état passé[cite: 2].` },
+        { s: "J'___ (chercher) mes clés pendant des heures.", a: ["ai cherché"], t: "Passé Composé", reg: "Régulier", e: `Action terminée[cite: 2].` },
+        { s: "La voiture ___ (sortir) d'une petite route.", a: ["est sortie"], t: "Passé Composé", reg: "Irrégulier", e: `Action ponctuelle[cite: 2]. Verbe de la maison d'être[cite: 1]. Le participe passé est régulier mais la structure demande être.` },
+        { s: "Soudain, il ___ (comprendre) le problème.", a: ["a compris"], t: "Passé Composé", reg: "Irrégulier", e: `${E_PC_IRR} Comprendre -> compris[cite: 1].` },
+        { s: "Elle ___ (porter) une robe noire.", a: ["portait"], t: "Imparfait", reg: "Régulier", e: `L'imparfait sert à faire une description[cite: 2].` },
+
+        // 41-50
+        { s: "En 2010, il ___ (devenir) médecin.", a: ["est devenu"], t: "Passé Composé", reg: "Irrégulier", e: `Action terminée[cite: 2]. Devenir est dérivé de venir, donc auxiliaire 'être'[cite: 1, 2].` },
+        { s: "Le directeur ___ (entrer) rapidement.", a: ["est entré"], t: "Passé Composé", reg: "Régulier", e: `${E_ETRE} Action ponctuelle[cite: 2].` },
+        { s: "J'___ (retenir) la leçon d'hier.", a: ["ai retenu"], t: "Passé Composé", reg: "Irrégulier", e: `Action terminée[cite: 2]. Dérivé de tenir.` },
+        { s: "Je t'___ (écrire) une longue lettre.", a: ["ai écrit"], t: "Passé Composé", reg: "Irrégulier", e: `${E_PC_IRR} Écrire -> écrit[cite: 1].` },
+        { s: "Ma mère m'___ (appeler) hier soir.", a: ["a appelé"], t: "Passé Composé", reg: "Régulier", e: `${E_PC_REG}` },
+        { s: "Il ___ (tomber) dans les escaliers.", a: ["est tombé"], t: "Passé Composé", reg: "Régulier", e: `${E_ETRE} Action ponctuelle terminée[cite: 2].` },
+        { s: "Le film ___ (reprendre) après la pause.", a: ["a repris"], t: "Passé Composé", reg: "Irrégulier", e: `Dérivé de prendre -> pris[cite: 1, 2].` },
+        { s: "Le cours ___ (commencer) à l'heure.", a: ["a commencé"], t: "Passé Composé", reg: "Régulier", e: `Action ponctuelle[cite: 2].` },
+        { s: "Pendant des années, je ___ (suivre) ce régime.", a: ["suivais"], t: "Imparfait", reg: "Régulier", e: `Habitude passée[cite: 2].` },
+        { s: "Elle m'___ (montrer) ses photos.", a: ["a montré"], t: "Passé Composé", reg: "Régulier", e: `${E_PC_REG}` },
+
+        // 51-60
+        { s: "Samedi matin, nous ___ (partir) de bonne heure.", a: ["sommes partis"], t: "Passé Composé", reg: "Irrégulier", e: `${E_ETRE} Partir -> parti[cite: 1]. Accord du participe passé[cite: 2].` },
+        { s: "L'écrivain ___ (mourir) en 1980.", a: ["est mort"], t: "Passé Composé", reg: "Irrégulier", e: `${E_ETRE} Mourir -> mort[cite: 1].` },
+        { s: "J'___ (ouvrir) la fenêtre car il faisait chaud.", a: ["ai ouvert"], t: "Passé Composé", reg: "Irrégulier", e: `${E_PC_IRR} Ouvrir -> ouvert[cite: 1].` },
+        { s: "Pendant qu'il conduisait, il ___ (lire) le panneau.", a: ["lisait", "a lu"], t: "Imparfait", reg: "Irrégulier", e: `Peut être Imparfait (action longue) ou Passé Composé (ponctuelle). Lire -> lu[cite: 1].` },
+        { s: "Le programme s'___ (arrêter) soudainement.", a: ["est arrêté"], t: "Passé Composé", reg: "Régulier", e: `Action ponctuelle[cite: 2]. Verbes pronominaux utilisent 'être'[cite: 1, 2].` },
+        { s: "Ce restaurant ne ___ (servir) que du poisson.", a: ["servait"], t: "Imparfait", reg: "Régulier", e: `Habitude passée[cite: 2].` },
+        { s: "J'___ (jeter) les vieux papiers hier.", a: ["ai jeté"], t: "Passé Composé", reg: "Régulier", e: `${E_PC_REG}` },
+        { s: "Nous ___ (recevoir) ta lettre hier.", a: ["avons reçu"], t: "Passé Composé", reg: "Irrégulier", e: `${E_PC_IRR} Recevoir -> reçu[cite: 1].` },
+        { s: "Marie ___ (monter) sur la Tour Eiffel.", a: ["est montée"], t: "Passé Composé", reg: "Régulier", e: `Verbe intransitif (sans COD) de mouvement = auxiliaire être[cite: 1].` },
+        { s: "Les élèves ___ (se lever) tôt.", a: ["se sont levés"], t: "Passé Composé", reg: "Régulier", e: `Action ponctuelle[cite: 2]. Les verbes pronominaux utilisent 'être'[cite: 1, 2].` },
+
+        // 61-70
+        { s: "Autrefois, il ___ (agir) toujours ainsi.", a: ["agissait"], t: "Imparfait", reg: "Régulier", e: `Habitude passée[cite: 2].` },
+        { s: "J'___ (perdre) mes lunettes ce matin.", a: ["ai perdu"], t: "Passé Composé", reg: "Régulier", e: `Action terminée[cite: 2].` },
+        { s: "Je déjeunais en ___ (écouter) la radio.", a: ["écoutant"], t: "Participe Présent", reg: "Régulier", e: `Piège ! Avec 'en', c'est le gérondif. (Astuce basée sur le contexte : 'en écoutant les informations'[cite: 2]). Mais acceptons 'écoutais' si la phrase était 'j'écoutais'. (Réponse : écoutant)` }, // Minor curveball based on text
+        { s: "Elle ___ (continuer) à marcher sans s'arrêter.", a: ["a continué", "continuait"], t: "Passé Composé", reg: "Régulier", e: `Les deux sont possibles selon si on décrit (imparfait) ou on raconte l'action terminée (PC)[cite: 2].` },
+        { s: "Elle ___ (sourire) quand elle m'a vu.", a: ["a souri"], t: "Passé Composé", reg: "Irrégulier", e: `Action ponctuelle[cite: 2]. Sourire se conjugue comme rire (ri)[cite: 1].` },
+        { s: "Dans le bus, j'___ (apercevoir) une jeune fille.", a: ["ai aperçu"], t: "Passé Composé", reg: "Irrégulier", e: `Action ponctuelle dans le récit[cite: 2].` },
+        { s: "Je l'___ (reconnaître) immédiatement.", a: ["ai reconnu"], t: "Passé Composé", reg: "Irrégulier", e: `Connaître -> connu[cite: 1].` },
+        { s: "Il ___ (ajouter) du sucre dans son café hier.", a: ["a ajouté"], t: "Passé Composé", reg: "Régulier", e: `${E_PC_REG}` },
+        { s: "Enfants, nous ___ (jouer) dans le parc.", a: ["jouions"], t: "Imparfait", reg: "Régulier", e: `Habitude passée[cite: 2].` },
+        { s: "Je ___ (marcher) quand soudain il a plu.", a: ["marchais"], t: "Imparfait", reg: "Régulier", e: `Action en cours (non terminée) interrompue par une autre[cite: 2].` },
+
+        // 71-80
+        { s: "Je ___ (garder) un bon souvenir de ce voyage.", a: ["garde", "ai gardé", "gardais"], t: "Imparfait", reg: "Régulier", e: `Accepte 'gardais' (état passé) ou 'ai gardé' (bilan)[cite: 2].` },
+        { s: "Il me ___ (manquer) beaucoup la semaine dernière.", a: ["a manqué"], t: "Passé Composé", reg: "Régulier", e: `${E_PC_REG}` },
+        { s: "Nous ___ (retrouver) nos amis au café.", a: ["avons retrouvé"], t: "Passé Composé", reg: "Régulier", e: `${E_PC_REG}` },
+        { s: "Quelques minutes plus tard, elle ___ (descendre) du bus.", a: ["est descendue"], t: "Passé Composé", reg: "Régulier", e: `Verbe intransitif = auxiliaire être[cite: 1]. Action ponctuelle[cite: 2].` },
+        { s: "Je lui ___ (rappeler) son rendez-vous.", a: ["ai rappelé"], t: "Passé Composé", reg: "Régulier", e: `${E_PC_REG}` },
+        { s: "Ils ___ (quitter) la ville en 2020.", a: ["ont quitté"], t: "Passé Composé", reg: "Régulier", e: `Action terminée[cite: 2].` },
+        { s: "Elle se ___ (tourner) subitement vers moi.", a: ["est tournée"], t: "Passé Composé", reg: "Régulier", e: `Action ponctuelle[cite: 2]. Verbes pronominaux utilisent l'auxiliaire être[cite: 1, 2].` },
+        { s: "Je ___ (finir) mes devoirs à 20h.", a: ["ai fini"], t: "Passé Composé", reg: "Régulier", e: `Les verbes en -ir forment leur participe en -i[cite: 1].` },
+        { s: "Il ___ (courir) pour attraper le train hier.", a: ["a couru"], t: "Passé Composé", reg: "Irrégulier", e: `Action terminée[cite: 2].` },
+        { s: "Ce film m'___ (plaire) beaucoup.", a: ["a plu"], t: "Passé Composé", reg: "Irrégulier", e: `Action terminée[cite: 2].` }
+    ];
+
+    let currentQuiz = [];
+    let score = 0;
+    let questionsAnswered = 0;
+
+    function startQuiz() {
+        score = 0;
+        questionsAnswered = 0;
+        document.getElementById('score-display').innerHTML = "Score : 0 / 12";
+        const shuffled = [...scenarios].sort(() => 0.5 - Math.random());
+        currentQuiz = shuffled.slice(0, 12);
+        renderQuiz();
+        window.scrollTo(0,0);
+    }
+
+    function renderQuiz() {
+        const area = document.getElementById('quiz-area');
+        area.innerHTML = '';
+        
+        currentQuiz.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'scenario';
+            
+            const badgeClass = item.reg === 'Régulier' ? 'regulier' : 'irregulier';
+            const badgeEn = item.reg === 'Régulier' ? 'Regular' : 'Irregular';
+
+            div.innerHTML = `
+                <div style="text-align: center;">
+                    <span class="verb-badge ${badgeClass}">Verbe ${item.reg} (${badgeEn})</span>
+                </div>
+                <div class="main-sentence">« ${item.s} »</div>
+                
+                <div class="options" id="opt-${index}">
+                    <input type="text" id="input-${index}" placeholder="Conjugaison...">
+                    <button class="btn-check" onclick="checkFill(${index})">Vérifier / Check</button>
+                </div>
+                <div id="feedback-${index}" class="feedback"></div>
+            `;
+            
+            area.appendChild(div);
+        });
+    }
+
+    function checkFill(idx) {
+        const val = document.getElementById(`input-${idx}`).value.trim().toLowerCase();
+        const item = currentQuiz[idx];
+        const feedback = document.getElementById(`feedback-${idx}`);
+        feedback.style.display = 'block';
+
+        if (item.a.map(ans => ans.toLowerCase()).includes(val)) {
+            showResult(feedback, true, `Correct ! (${item.t}) ${item.e}`, "Correct!");
+            score++;
+        } else {
+            const correctList = item.a.join(' / ');
+            showResult(feedback, false, `Faux. Réponse(s) possible(s) : ${correctList}. ${item.e}`, "Incorrect.");
+        }
+        finalizeQuestion(idx);
+    }
+
+    function showResult(div, isCorrect, textFr, textEn) {
+        div.className = isCorrect ? "feedback correct" : "feedback incorrect";
+        div.innerHTML = `<span class="explanation-fr">${textFr}</span><span class="explanation-en">${textEn}</span>`;
+    }
+
+    function finalizeQuestion(idx) {
+        questionsAnswered++;
+        updateScore();
+        const container = document.getElementsByClassName('scenario')[idx];
+        const inputs = container.getElementsByTagName('input');
+        const buttons = container.getElementsByTagName('button');
+        for (let i of inputs) i.disabled = true;
+        for (let b of buttons) b.disabled = true;
+    }
+
+    function updateScore() {
+        document.getElementById('score-display').innerHTML = `Score : ${score} / 12`;
+    }
+
+    // Initialize the quiz on load
+    window.onload = startQuiz;
+</script>
+
+</body>
+</html>
